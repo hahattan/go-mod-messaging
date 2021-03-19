@@ -18,18 +18,16 @@ package types
 
 import (
 	"context"
+	"encoding/json"
 )
 
 const (
-	checksum      = "payload-checksum"
 	correlationId = "X-Correlation-ID"
 	contentType   = "Content-Type"
 )
 
 // MessageEnvelope is the data structure for messages. It wraps the generic message payload with attributes.
 type MessageEnvelope struct {
-	// Checksum used to communicate to core-data that an Event message has been received via the message bus
-	Checksum string
 	// CorrelationID is an object id to identify the envelop
 	CorrelationID string
 	// Payload is byte representation of the data being transferred.
@@ -39,14 +37,14 @@ type MessageEnvelope struct {
 }
 
 // NewMessageEnvelope creates a new MessageEnvelope for the specified payload with attributes from the specified context
-func NewMessageEnvelope(payload []byte, ctx context.Context) MessageEnvelope {
+func NewMessageEnvelope(data interface{}, ctx context.Context) MessageEnvelope {
 	envelope := MessageEnvelope{
-		// TODO: Remove Checksum for V2.0 release.
-		//       Also consider just passing correlationId & contentType as parameters instead of Context
-		Checksum:      fromContext(ctx, checksum),
 		CorrelationID: fromContext(ctx, correlationId),
 		ContentType:   fromContext(ctx, contentType),
-		Payload:       payload,
+	}
+	if envelope.ContentType == "application/json" {
+		bytes, _ := json.Marshal(data)
+		envelope.Payload = bytes
 	}
 
 	return envelope
